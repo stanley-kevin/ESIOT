@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Basics of Arduino Programming – Embedded Systems &amp; IoT</title>
+<style>
+:root{--bg:#f6f8f7;--card:#fff;--ink:#16211f;--mut:#51615d;--pcb:#00676b;--pcb2:#0a8f8f;--cu:#b8661f;--line:#d3dedb;--ok:#13795b;--bad:#b3261e}
+*{box-sizing:border-box}body{margin:0;font:16px/1.65 Georgia,"Times New Roman",serif;background:var(--bg);color:var(--ink)}
+h1,h2,h3,nav,button,table,.tag,summary{font-family:"Segoe UI",system-ui,Arial,sans-serif}
+header{background:var(--pcb);color:#fff;padding:28px 5vw}header h1{margin:4px 0;font-size:clamp(1.6rem,4vw,2.5rem)}header p{margin:4px 0;max-width:80ch;color:#d8f0ef}
+nav{position:sticky;top:0;background:#0b3b3d;display:flex;flex-wrap:wrap;gap:2px 14px;padding:8px 5vw;z-index:9}nav a{color:#cfeceb;text-decoration:none;font-size:.88rem;padding:3px 0}nav a:hover{color:#fff;text-decoration:underline}
+main{max-width:1000px;margin:auto;padding:12px 4vw 50px}section{margin:28px 0;padding-top:6px}
+h2{color:var(--pcb);border-bottom:2px solid var(--cu);padding-bottom:4px}h3{color:#0b3b3d;margin-bottom:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px 16px;margin:12px 0}
+.key{border-left:4px solid var(--cu);background:#fff6ec;padding:8px 14px;margin:12px 0}
+.eq{background:#eef6f5;padding:8px 14px;margin:8px 0;font-family:"Cambria Math",Cambria,serif;font-size:1.05rem;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem;margin:10px 0}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{background:#dcecea}
+.scroll{overflow-x:auto}svg{max-width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:4px}
+figcaption{font-size:.85rem;color:var(--mut);margin:4px 0 12px}
+pre{background:#10211f;color:#d9f3ee;padding:12px;border-radius:5px;overflow-x:auto;font-size:.85rem;line-height:1.45}
+.tag{font-size:.72rem;padding:1px 8px;border-radius:10px;color:#fff;margin-left:6px}.Easy{background:#2c8a5e}.Moderate{background:#b8861f}.Difficult{background:#a8321f}
+.q{border:1px solid var(--line);background:#fff;border-radius:6px;padding:10px 14px;margin:10px 0}.q label{display:block;padding:2px 0;cursor:pointer}
+.exp{display:none;margin-top:6px;padding:6px 10px;background:#f1f5f4;font-size:.92rem}.q.ok{border-color:var(--ok)}.q.no{border-color:var(--bad)}.q.na{border-color:var(--cu)}.show .exp{display:block}
+button{background:var(--pcb);color:#fff;border:0;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:.95rem;margin:4px 6px 4px 0}button.alt{background:#6b7b77}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--cu)}
+.score{font:600 1.1rem "Segoe UI",Arial;margin:8px 0}details{background:#fff;border:1px solid var(--line);border-radius:5px;margin:6px 0;padding:6px 12px}summary{cursor:pointer;font-weight:600}
+@media print{nav,button{display:none}body{background:#fff}.exp{display:block}details>*{display:block}}
+</style></head><body>
+<header><div>Embedded System and IoT · Unit: IoT Architecture and Embedded Hardware</div>
+<h1>Basics of Arduino Programming</h1>
+<p><b>Learning objectives:</b> write and structure an Arduino sketch; use digital I/O, ADC, PWM and serial; calculate ADC counts, PWM averages, LED resistors, timer and baud settings; answer GATE-style and interview questions.</p></header>
+<nav><a href="#intro">Introduction</a><a href="#diagram">Architecture</a><a href="#working">Working</a><a href="#wave">Waveforms</a><a href="#eq">Equations</a><a href="#solved">Solved problems</a><a href="#gate">GATE</a><a href="#interview">Interview</a><a href="#apps">Applications</a><a href="#quiz">Topic quiz</a><a href="#revision">Revision</a></nav>
+<main>
+
+<section id="intro"><h2>1. Introduction</h2>
+<p><b>Arduino</b> is an open-source embedded platform: a microcontroller board plus a simplified C/C++ framework (the Arduino core) and an IDE. A <i>sketch</i> (.ino file) is compiled with avr-gcc, uploaded through a bootloader, and runs bare-metal on the MCU. The reference board here is the <b>Arduino Uno R3</b> (ATmega328P).</p>
+<p><b>Operating principle:</b> the CPU fetches instructions from flash, reads inputs (digital pins, ADC, serial), processes them in SRAM, and drives outputs (GPIO, PWM, serial) in an endless loop.</p>
+<p><b>Why it matters:</b> it is the quickest route from concept to working hardware, and the GPIO/ADC/PWM/UART/I²C/timer concepts transfer directly to STM32, ESP32 and industrial MCUs.</p>
+<div class="card"><b>Prerequisites:</b> basic C (variables, functions, operators), Ohm's law, logic levels, binary/hex numbers.</div>
+<h3>Key terminology</h3>
+<table><tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>GPIO</td><td>General-purpose input/output pin configured in software</td></tr>
+<tr><td>PWM</td><td>Pulse-width modulation: fixed frequency, variable duty cycle</td></tr>
+<tr><td>ADC</td><td>Converts analog voltage to digital count (10-bit on Uno)</td></tr>
+<tr><td>Bootloader</td><td>Small resident program that loads sketches over serial/USB</td></tr>
+<tr><td>Baud rate</td><td>Serial symbols per second (bits/s for UART)</td></tr>
+<tr><td>Pull-up</td><td>Resistor holding a pin HIGH when nothing drives it</td></tr>
+<tr><td>Interrupt</td><td>Hardware event that pre-empts the main loop to run an ISR</td></tr></table>
+<h3>Classification</h3>
+<ul><li><b>8-bit AVR:</b> Uno, Nano, Mega (5 V logic)</li><li><b>32-bit ARM:</b> Due, Zero, Portenta</li><li><b>Wi-Fi/BLE (IoT):</b> ESP32-based boards, Nano 33 IoT (3.3 V logic)</li></ul>
+<p><b>Uno specification:</b></p>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>MCU / clock</td><td>ATmega328P / 16 MHz</td></tr><tr><td>Flash / SRAM / EEPROM</td><td>32 KB (0.5 KB bootloader) / 2 KB / 1 KB</td></tr>
+<tr><td>Digital I/O</td><td>14 (D0–D13); PWM on D3, D5, D6, D9, D10, D11</td></tr><tr><td>Analog inputs</td><td>6 (A0–A5), 10-bit</td></tr><tr><td>Logic / pin current</td><td>5 V / 20 mA recommended, 40 mA absolute maximum per pin</td></tr>
+<tr><td>Serial buses</td><td>UART (D0/D1), SPI (D10–D13), I²C (A4 = SDA, A5 = SCL)</td></tr></table></section>
+
+<section id="diagram"><h2>2. Architecture and program flow</h2>
+<figure><svg viewBox="0 0 760 270" role="img" aria-label="Arduino block diagram" font-family="Segoe UI,Arial" font-size="13">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#0b3b3d"/></marker></defs>
+<g fill="#eaf4f3" stroke="#00676b" stroke-width="1.5"><rect x="10" y="95" width="100" height="60"/><rect x="140" y="95" width="100" height="60"/><rect x="270" y="20" width="300" height="230" fill="#f4faf9"/><rect x="600" y="40" width="150" height="70"/><rect x="600" y="150" width="150" height="70"/></g>
+<g fill="#fff" stroke="#b8661f"><rect x="285" y="40" width="130" height="36"/><rect x="285" y="86" width="130" height="36"/><rect x="285" y="132" width="130" height="36"/><rect x="430" y="40" width="125" height="36"/><rect x="430" y="86" width="125" height="36"/><rect x="430" y="132" width="125" height="36"/><rect x="285" y="190" width="270" height="40"/></g>
+<g text-anchor="middle" fill="#16211f"><text x="60" y="122">Sketch</text><text x="60" y="140">(.ino)</text><text x="190" y="122">avr-gcc →</text><text x="190" y="140">.hex file</text>
+<text x="420" y="14">ATmega328P on Arduino Uno</text><text x="350" y="63">CPU (AVR)</text><text x="350" y="109">Flash + bootloader</text><text x="350" y="155">SRAM / EEPROM</text><text x="492" y="63">GPIO / PWM timers</text><text x="492" y="109">10-bit ADC (A0–A5)</text><text x="492" y="155">UART / SPI / I²C</text><text x="420" y="214">16 MHz clock · 5 V supply · reset</text>
+<text x="675" y="70">Inputs: switch,</text><text x="675" y="88">LDR, LM35, sensors</text><text x="675" y="180">Outputs: LED, motor</text><text x="675" y="198">driver, display</text></g>
+<g stroke="#0b3b3d" stroke-width="2" marker-end="url(#a)"><line x1="110" y1="125" x2="140" y2="125"/><line x1="240" y1="125" x2="270" y2="125"/><line x1="600" y1="75" x2="570" y2="100"/><line x1="570" y1="170" x2="600" y2="185"/></g></svg>
+<figcaption>Fig. 1 – Block diagram of sketch upload and the ATmega328P functional blocks (schematic illustration).</figcaption></figure>
+<table><tr><th>Block</th><th>Function</th></tr><tr><td>Flash</td><td>Stores program (non-volatile)</td></tr><tr><td>SRAM</td><td>Variables, stack; lost at power-off</td></tr><tr><td>EEPROM</td><td>Small non-volatile data (settings)</td></tr><tr><td>Timers</td><td>PWM, millis(), delay timing, capture/compare</td></tr><tr><td>ADC</td><td>Samples 0–5 V into 0–1023</td></tr><tr><td>UART/SPI/I²C</td><td>Serial communication with PC, SD cards, sensors</td></tr></table></section>
+
+<section id="working"><h2>3. Working principle</h2>
+<pre>const int LED = 9, POT = A0;
+void setup() {            // runs once after reset
+  pinMode(LED, OUTPUT);
+  Serial.begin(9600);
+}
+void loop() {             // repeats forever
+  int raw = analogRead(POT);          // 0..1023
+  analogWrite(LED, raw / 4);          // 0..255
+  Serial.println(raw);
+  delay(100);
+}</pre>
+<ol><li><b>Power/reset:</b> the bootloader runs briefly, then jumps to the sketch.</li><li><b>Hidden main():</b> initialises timers and calls setup() once, then calls loop() repeatedly.</li><li><b>Signal flow:</b> pot voltage → ADC count → scaled to 8 bits → PWM duty → LED average brightness; the raw value goes to the PC over UART.</li></ol>
+<h3>Core functions</h3>
+<table><tr><th>Function</th><th>Role</th></tr><tr><td>pinMode(pin, mode)</td><td>INPUT, OUTPUT or INPUT_PULLUP</td></tr><tr><td>digitalWrite / digitalRead</td><td>Drive or read HIGH (5 V) / LOW (0 V)</td></tr><tr><td>analogRead(pin)</td><td>Returns 0–1023</td></tr><tr><td>analogWrite(pin, 0–255)</td><td>PWM output on PWM pins only (not a true DAC)</td></tr><tr><td>delay(ms) / millis()</td><td>Blocking delay / non-blocking time since start</td></tr><tr><td>Serial.begin / print</td><td>UART setup and output</td></tr></table>
+<h3>Advantages, limits, design cautions</h3>
+<p><b>Advantages:</b> low cost, huge library ecosystem, fast prototyping. <b>Limits:</b> 2 KB SRAM, 8-bit CPU, no OS, abstraction hides timing detail. <b>Cautions:</b> respect pin current limits; use a transistor/driver for motors and relays; avoid long delay() in responsive code; use String objects sparingly on small SRAM (heap fragmentation).</p>
+<div class="key"><b>Common misconceptions:</b> (1) analogWrite does not produce a true analog voltage. (2) analogRead returns a count, not volts. (3) delay() blocks the CPU, though interrupts still run. (4) Unconnected input pins float; they do not read LOW.</div></section>
+
+<section id="wave"><h2>4. Waveforms (illustrative)</h2>
+<figure><svg viewBox="0 0 760 300" role="img" aria-label="PWM waveforms" font-family="Segoe UI,Arial" font-size="12">
+<g fill="none" stroke="#00676b" stroke-width="2">
+<polyline points="60,50 60,20 160,20 160,50 260,50 260,20 360,20 360,50 460,50 460,20 560,20 560,50 660,50"/>
+<polyline points="60,150 60,120 110,120 110,150 260,150 260,120 310,120 310,150 460,150 460,120 510,120 510,150 660,150"/>
+<polyline points="60,250 60,220 210,220 210,250 260,250 260,220 410,220 410,250 460,250 460,220 610,220 610,250 660,250"/></g>
+<g fill="#16211f"><text x="5" y="40">50 %</text><text x="5" y="140">25 %</text><text x="5" y="240">75 %</text><text x="670" y="40">analogWrite(…,127)</text><text x="670" y="140">analogWrite(…,64)</text><text x="670" y="240">analogWrite(…,191)</text><text x="270" y="290">T ≈ 2.04 ms (490 Hz) on D3, D9, D10, D11</text></g></svg>
+<figcaption>Fig. 2 – Illustrative PWM outputs (5 V peak) at three duty cycles. Not a Multisim capture; no simulation screenshot was supplied.</figcaption></figure>
+<p>The LED or RC filter responds to the <b>average</b> value V<sub>avg</sub> = D × 5 V. Multisim can simulate analog parts of this circuit (LED, resistor, RC filter, sensors) using a pulse source; a full Uno sketch runs in Arduino-specific simulators instead.</p></section>
+
+<section id="eq"><h2>5. Equations</h2>
+<div class="card"><b>ADC count</b><div class="eq">N = floor( V<sub>in</sub> · 2<sup>n</sup> / V<sub>ref</sub> ),  n = 10 → 0…1023</div>
+V<sub>in</sub> in volts, V<sub>ref</sub> = 5 V default. LSB = V<sub>ref</sub>/2<sup>n</sup> = 5/1024 ≈ 4.88 mV. Reconstructed voltage ≈ N × LSB (arduino reference text often uses 1023; error is under 1 LSB).</div>
+<div class="card"><b>PWM duty and average</b><div class="eq">D = value / 255,  V<sub>avg</sub> = D · V<sub>H</sub>,  T = 1/f<sub>PWM</sub></div>
+Derivation: V<sub>avg</sub> = (1/T)∫<sub>0</sub><sup>T</sup>v dt = (V<sub>H</sub>·t<sub>on</sub>)/T = D·V<sub>H</sub>. Limits: value 0 → 0 V, 255 → 5 V constant.</div>
+<div class="card"><b>LED series resistor</b><div class="eq">R = (V<sub>CC</sub> − V<sub>F</sub>) / I<sub>F</sub></div>
+Use the next standard value above R, so current is slightly lower. Keep I<sub>F</sub> ≤ 20 mA per pin.</div>
+<div class="card"><b>Timer overflow frequency</b><div class="eq">f<sub>ovf</sub> = f<sub>clk</sub> / (N<sub>pre</sub> · 2<sup>b</sup>)</div>
+N<sub>pre</sub> = prescaler, b = timer bits. Uno default PWM: 16 MHz / (64 × 256) ≈ 976 Hz on D5, D6 (about 490 Hz on D3, D9, D10, D11).</div>
+<div class="card"><b>UART baud register (normal mode)</b><div class="eq">UBRR = f<sub>osc</sub> / (16 · baud) − 1</div>
+Round to the nearest integer; baud error = (actual − target)/target.</div>
+<div class="card"><b>Pull-up/Pull-down current:</b> I = V/R. Internal pull-up ≈ 20–50 kΩ gives about 0.1–0.25 mA at 5 V.</div></section>
+
+<section id="solved"><h2>6. Solved problems</h2>
+<div class="card"><h3>P1 (Easy) ADC count</h3><p>A sensor outputs 2.5 V; V<sub>ref</sub> = 5 V, 10-bit ADC. Find N and the resolution.</p>
+<p>N = floor(2.5 × 1024 / 5) = floor(512) = <b>512</b>. LSB = 5/1024 = <b>4.88 mV</b>.</p><p><i>Interpretation:</i> mid-scale input gives mid-scale count.</p></div>
+<div class="card"><h3>P2 (Moderate) LED resistor</h3><p>5 V supply, red LED V<sub>F</sub> = 2 V, I<sub>F</sub> = 10 mA. Choose R.</p>
+<p>R = (5 − 2)/0.010 = <b>300 Ω</b> → standard value 330 Ω. Actual I = 3/330 = <b>9.09 mA</b>. Power in R = I²R = (9.09 mA)² × 330 ≈ 27 mW (a ¼ W resistor is ample).</p></div>
+<div class="card"><h3>P3 (Difficult, GATE-style) PWM average and timing</h3><p>analogWrite(9, 191) on an Uno (490 Hz). Find duty, V<sub>avg</sub>, T and t<sub>on</sub>.</p>
+<p>D = 191/255 = <b>0.749</b>. V<sub>avg</sub> = 0.749 × 5 = <b>3.745 V</b>. T = 1/490 = <b>2.04 ms</b>. t<sub>on</sub> = 0.749 × 2.04 = <b>1.53 ms</b>.</p><p><i>Shortcut:</i> value/255 ≈ value/256; 191 is about 3/4 of full scale, so about 3.75 V.</p></div></section>
+
+<section id="gate"><h2>7. GATE-style practice (original questions)</h2>
+<p>These are original practice questions, not previous-year GATE papers. Select answers and press <b>Check answers</b> to see the key and reasoning.</p>
+<div id="gq"></div><button onclick="chk('g')">Check answers</button><button class="alt" onclick="rst('g')">Reset</button><div class="score" id="gs"></div>
+<div class="key"><b>High-yield GATE topics:</b> ADC count/resolution, timer overflow and prescaler maths, baud/UBRR, PWM average, pull-up logic, integer overflow in 16-bit int, interrupt vs polling, I²C/SPI/UART comparison.</div></section>
+
+<section id="interview"><h2>8. Interview preparation</h2><div id="iv"></div>
+<div class="key"><b>Industry perspective:</b> Arduino is used for proof-of-concept boards, test fixtures, sensor characterisation and teaching. Production products move to bare MCUs (STM32, ESP32, NXP) with the same concepts: register-level GPIO/ADC/timer setup, RTOS, low-power design and a hardware-validation plan. Interviewers value timing thinking (non-blocking code, interrupts), electrical sense (current limits, pull-ups) and debugging method.</div></section>
+
+<section id="apps"><h2>9. Applications and industry relevance</h2>
+<table><tr><th>Domain</th><th>Example</th></tr><tr><td>IoT sensing</td><td>Temperature/humidity node sending data via ESP-based module (MQTT)</td></tr><tr><td>Automation</td><td>Relay-controlled irrigation, smart lighting</td></tr><tr><td>Robotics</td><td>PWM motor drive with H-bridge, ultrasonic distance sensing</td></tr><tr><td>Test and validation</td><td>Low-cost fixture controllers, data loggers, signal generators</td></tr><tr><td>Education/R&amp;D</td><td>Rapid prototype before PCB and custom firmware</td></tr></table>
+<p><b>Challenges:</b> switch bounce, ADC noise and reference accuracy, ground loops, brown-out on motor start, SRAM exhaustion, timing jitter from blocking code. <b>Roles:</b> embedded firmware engineer, IoT engineer, hardware validation/test engineer, electronics R&amp;D engineer.</p></section>
+
+<section id="quiz"><h2>10. Topic quiz (10 questions)</h2><div id="tq"></div>
+<button onclick="chk('t')">Check answers</button><button class="alt" onclick="rst('t')">Reset quiz</button><div class="score" id="ts"></div></section>
+
+<section id="revision"><h2>11. Revision notes</h2>
+<h3>Formula sheet</h3>
+<table><tr><th>Quantity</th><th>Formula</th></tr><tr><td>ADC count</td><td>N = floor(V<sub>in</sub>·1024/V<sub>ref</sub>)</td></tr><tr><td>LSB</td><td>V<sub>ref</sub>/1024 = 4.88 mV (5 V)</td></tr><tr><td>PWM average</td><td>(value/255) × 5 V</td></tr><tr><td>LED resistor</td><td>(V<sub>CC</sub> − V<sub>F</sub>)/I<sub>F</sub></td></tr><tr><td>Timer overflow</td><td>f<sub>clk</sub>/(prescaler × 2<sup>b</sup>)</td></tr><tr><td>UBRR</td><td>f<sub>osc</sub>/(16·baud) − 1</td></tr></table>
+<h3>Comparison</h3>
+<div class="scroll"><table><tr><th></th><th>Uno (ATmega328P)</th><th>ESP32 board</th><th>STM32 board</th></tr><tr><td>Core</td><td>8-bit AVR, 16 MHz</td><td>32-bit dual-core, up to 240 MHz</td><td>32-bit ARM Cortex-M</td></tr><tr><td>Logic level</td><td>5 V</td><td>3.3 V</td><td>3.3 V typical</td></tr><tr><td>Wireless</td><td>None</td><td>Wi-Fi + Bluetooth</td><td>Depends on part</td></tr><tr><td>ADC</td><td>10-bit</td><td>12-bit (non-linear, noisy)</td><td>12-bit typical</td></tr></table></div>
+<h3>Common errors and troubleshooting</h3>
+<ul><li>Upload fails: wrong board/port, Serial monitor or another app holding the port, D0/D1 loaded.</li><li>LED dim or dead: reversed polarity, missing resistor, wrong pin number.</li><li>Button random: floating input; use INPUT_PULLUP and active-LOW logic.</li><li>Garbage in Serial Monitor: baud mismatch.</li><li>Resets under load: motor/servo powered from the 5 V pin; use an external supply with common ground.</li><li>analogWrite fails: pin is not PWM-capable (the tilde ~ pins).</li></ul>
+<p><b>Memory aids:</b> PWM pins D3 5 6 9 10 11 ("3-5-6, 9-10-11"). Unpressed button with pull-up reads 1, pressed reads 0.</p></section>
+</main>
+<script>
+const G=[
+["Easy","Which Uno pin supports analogWrite()?",["D2","D3","D4","D7"],1,"D3, 5, 6, 9, 10, 11 have hardware PWM."],
+["Easy","Which function runs exactly once after reset?",["loop()","main()","setup()","init()"],2,"setup() runs once; loop() repeats. main() exists but is hidden in the core."],
+["Moderate","10-bit ADC, V<sub>ref</sub> = 5 V, V<sub>in</sub> = 1.25 V. analogRead returns:",["128","256","320","1023"],1,"N = 1.25×1024/5 = 256."],
+["Moderate","LED: V<sub>F</sub> = 1.8 V, I<sub>F</sub> = 16 mA from 5 V. Required R:",["100 Ω","200 Ω","320 Ω","500 Ω"],1,"R = 3.2/0.016 = 200 Ω. 320 Ω is from using 5 V ÷ 16 mA, forgetting V<sub>F</sub>."],
+["Moderate","analogWrite(9, 64) on 5 V Uno gives average voltage about:",["0.64 V","1.25 V","2.5 V","3.75 V"],1,"64/255 × 5 = 1.255 V."],
+["Moderate","f<sub>osc</sub> = 16 MHz, 19200 baud. UBRR (normal mode) =",["25","51","103","207"],1,"16e6/(16×19200) − 1 = 51.08 − 0 → 51 (51.08 after subtracting 1 gives 52.08−1; compute 833.3/… use 16e6/307200 = 52.08, minus 1 = 51.08 → 51)."],
+["Difficult","8-bit timer, prescaler 64, 16 MHz. Overflow frequency:",["61.0 Hz","244 Hz","976.6 Hz","3906 Hz"],2,"16e6/64 = 250 kHz; ÷256 = 976.56 Hz."],
+["Difficult","On Uno (16-bit int), analogRead returns 1000. Value of <code>int v = analogRead(A0)*50;</code>",["50000","−15536","32767","15536"],1,"50000 exceeds 32767; wraps modulo 65536 → 50000 − 65536 = −15536. Use long."],
+["Moderate","Which pins are I²C SDA/SCL on Uno?",["D0/D1","D10/D11","A4/A5","D2/D3"],2,"A4 = SDA, A5 = SCL. D0/D1 are UART."],
+["Difficult","pinMode(2, INPUT_PULLUP); switch from D2 to GND. digitalRead(2) when pressed:",["HIGH","LOW","Floating","Undefined"],1,"Pressed shorts the pin to GND → LOW (active-low logic)."]];
+G[5][4]="UBRR = 16×10⁶/(16×19200) − 1 = 52.08 − 1 = 51.08 → 51. Choosing 103 is the 9600-baud value.";
+const T=[
+["Easy","The Arduino Uno MCU is:",["ATmega328P","PIC16F877","8051","ESP8266"],0,"Uno R3 uses the ATmega328P."],
+["Easy","Uno clock frequency:",["8 MHz","16 MHz","48 MHz","240 MHz"],1,"16 MHz crystal/resonator."],
+["Easy","Which function sets a pin as input or output?",["digitalWrite","analogRead","pinMode","attachPin"],2,"pinMode configures direction and pull-up."],
+["Easy","Serial.begin(9600) sets:",["Delay","Baud rate","Clock","Pin mode"],1,"9600 symbols/s UART speed."],
+["Easy","delay(1000) pauses for about:",["1 µs","1 ms","1 s","10 s"],2,"Argument is in milliseconds."],
+["Easy","digitalWrite(13, HIGH) on an Uno outputs about:",["3.3 V","5 V","12 V","0 V"],1,"Uno logic HIGH is 5 V."],
+["Moderate","Uno SRAM size:",["32 KB","1 KB","2 KB","8 KB"],2,"2 KB SRAM; 32 KB flash; 1 KB EEPROM."],
+["Moderate","Main advantage of millis() over delay():",["More accurate","Non-blocking timing","Less memory","Higher voltage"],1,"Code can do other tasks while waiting."],
+["Moderate","Uno ADC resolution:",["8 bit","10 bit","12 bit","16 bit"],1,"0–1023 counts."],
+["Moderate","Purpose of the bootloader:",["Cool the chip","Load sketches over serial without a programmer","Generate PWM","Regulate voltage"],1,"It receives the .hex over USB-serial and writes it to flash."]];
+const I=[
+["Why does analogWrite not give a true analog output?","It produces PWM: a fixed-frequency digital square wave. The average equals D·V<sub>H</sub>; a low-pass RC filter is needed for a smooth DC level. <i>Follow-up:</i> how to choose RC? Make 1/(2πRC) ≪ f<sub>PWM</sub>."],
+["Difference between delay() and millis()?","delay() blocks the CPU; millis() returns elapsed time so you can compare timestamps and keep multitasking. <i>Follow-up:</i> millis() overflows after about 49.7 days; unsigned subtraction handles it."],
+["A button reads random values. Debug it.","Input is floating. Add a pull-up/pull-down or use INPUT_PULLUP, then debounce (about 5–20 ms, hardware RC or software)."],
+["How do you drive a motor from Arduino?","Never directly: pin gives ≤20 mA. Use a transistor/MOSFET or H-bridge, a flyback diode, separate supply and common ground; PWM the gate for speed."],
+["Explain how a sketch is compiled and loaded.","Preprocess .ino to C++, compile with avr-gcc, link with core, create .hex, avrdude sends it via bootloader on reset. ISP programming bypasses the bootloader."],
+["ADC reads noisy. What do you do?","Decouple supply and AREF, add RC filter at input, average samples, lower source impedance (≤10 kΩ), keep analog wiring away from switching traces, use a better reference if needed."],
+["Polling vs interrupt?","Polling checks repeatedly and wastes cycles; an interrupt calls an ISR on an event. ISR must be short, shared variables declared volatile, avoid delay/Serial inside."],
+["Compare UART, SPI, I²C.","UART: async, 2 wires, point-to-point. SPI: sync, 4 wires, fastest, one chip-select per slave. I²C: 2 wires, addressed multi-slave, slower, needs pull-ups."],
+["Sketch crashes randomly after adding strings. Why?","SRAM (2 KB) exhaustion or heap fragmentation from String. Use F() for constants, char arrays, check free RAM."],
+["How would you validate a sensor board with Arduino?","Apply known stimuli, log ADC counts over serial, compare with a calibrated meter, compute error against spec, check temperature and supply variation, repeat for multiple units."]];
+function build(id,A,p){document.getElementById(id).innerHTML=A.map((x,i)=>`<div class="q" id="${p}${i}"><b>Q${i+1}.</b> ${x[1]} <span class="tag ${x[0]}">${x[0]}</span>`+x[2].map((o,j)=>`<label><input type="radio" name="${p}${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${o}</label>`).join("")+`<div class="exp"></div></div>`).join("")}
+build("gq",G,"g");build("tq",T,"t");
+document.getElementById("iv").innerHTML=I.map((x,i)=>`<details><summary>Q${i+1}. ${x[0]}</summary><p>${x[1]}</p></details>`).join("");
+function chk(p){const A=p=="g"?G:T;let s=0,u=0;A.forEach((x,i)=>{const q=document.getElementById(p+i),r=q.querySelector("input:checked"),e=q.querySelector(".exp");q.className="q show";const k="ABCD"[x[3]];
+if(!r){u++;q.classList.add("na");e.innerHTML="<b>Unanswered.</b> Correct: "+k+". "+x[4]}else if(+r.value===x[3]){s++;q.classList.add("ok");e.innerHTML="<b>Correct.</b> "+x[4]}else{q.classList.add("no");e.innerHTML="<b>Incorrect.</b> Correct: "+k+". "+x[4]}});
+document.getElementById(p+"s").textContent=`Score: ${s}/10 (${s*10}%) · Unanswered: ${u}`}
+function rst(p){const A=p=="g"?G:T;A.forEach((x,i)=>{const q=document.getElementById(p+i);q.className="q";q.querySelectorAll("input").forEach(r=>r.checked=false);q.querySelector(".exp").innerHTML=""});document.getElementById(p+"s").textContent=""}
+</script></body></html>
